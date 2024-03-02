@@ -1,73 +1,102 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-#include <sys/types.h>
-#include <sys/wait.h>
-#include "path.h"
-#include "exit.h"
-#include "env.h"
+#include"shell.h"
+/**
+ * free_list_ln - frees list_ln
+ * @head: head link list.
+ * Return: void.
+ */
+void free_list_ln(list_ln **head)
+{
+	list_ln *tmp;
+	list_ln *curr;
 
-#define MAX_LINE_LENGTH 1024
-#define MAX_ARGS 64
-
-void execute_command(char *arguments[]) {
-    pid_t pid = fork();
-    if (pid == 0) {
-        if (strcmp(arguments[0], "exit") == 0) {
-            exit_shell();
-        } else if (strcmp(arguments[0], "env") == 0) {
-            print_env();
-            exit(EXIT_SUCCESS);
-        } else {
-            if (path_search(arguments[0]) == NULL) {
-                fprintf(stderr, "%s: command not found\n", arguments[0]);
-                exit(EXIT_FAILURE);
-            }
-            if (execvp(arguments[0], arguments) == -1) {
-                perror("Error executing command");
-                exit(EXIT_FAILURE);
-            }
-        }
-    } else if (pid < 0) {
-        perror("Error forking");
-        exit(EXIT_FAILURE);
-    } else {
-        int status;
-        waitpid(pid, &status, 0);
-    }
+	if (head != NULL)
+	{
+		curr = *head;
+		while ((tmp = curr) != NULL)
+		{
+			curr = curr->next;
+			free(tmp);
+		}
+		*head = NULL;
+	}
 }
 
-int main() {
-    char *line;
-    size_t len = 0;
-    ssize_t read;
-    char *arguments[MAX_ARGS];
 
-    while (1) {
-        printf("#cisfun$ ");
-        fflush(stdout);
+/**
+ * add_Storevar - adds a variable at the end
+ * StoreVar list.
+ * @head: head
+ * @lenvar: var length
+ * @val: value of the variable.
+ * @lenval: length of the value.
+ * Return: address of the head.
+ */
+StoreVar *add_Storevar(StoreVar **head, int lenvar, char *val, int lenval)
+{
+	StoreVar *new, *tmp;
 
-        read = getline(&line, &len, stdin);
-        if (read == -1) {
-            break;
-        }
+	new = malloc(sizeof(StoreVar));
+	if (new == NULL)
+		return (NULL);
 
-        if (strcmp(line, "exit\n") == 0) {
-            break;
-        }
+	new->len_var = lenvar;
+	new->val = val;
+	new->len_val = lenval;
 
-        char *token = strtok(line, " ");
-        int i = 0;
-        while (token != NULL && i < MAX_ARGS - 1) {
-            arguments[i++] = token;
-            token = strtok(NULL, " ");
-        }
-        arguments[i] = NULL;
+	new->next = NULL;
+	tmp = *head;
 
-        execute_command(arguments);
-    }
+	if (tmp == NULL)
+	{
+		*head = new;
+	}
+	else
+	{
+		while (tmp->next != NULL)
+			tmp = tmp->next;
+		tmp->next = new;
+	}
 
-    free(line);
-    return 0;
+	return (*head);
+}
+
+/**
+ * free_StoreVar - frees StoreVar list
+ * @head: head.
+ * Return: void.
+ */
+void free_StoreVar(StoreVar **head)
+{
+	StoreVar *tmp;
+	StoreVar *curr;
+
+	if (head != NULL)
+	{
+		curr = *head;
+		while ((tmp = curr) != NULL)
+		{
+			curr = curr->next;
+			free(tmp);
+		}
+		*head = NULL;
+	}
+}
+
+
+/**
+ * _memcpy - copies between void pointers.
+ * @dis_ptr: destination pointer.
+ * @ptr: source pointer.
+ * @size: size of the new pointer.
+ *
+ * Return: void.
+ */
+void _memcpy(void *dis_ptr, const void *ptr, unsigned int size)
+{
+	char *char_ptr = (char *)ptr;
+	char *char_dis_ptr = (char *)dis_ptr;
+	unsigned int i;
+
+	for (i = 0; i < size; i++)
+		char_dis_ptr[i] = char_ptr[i];
 }

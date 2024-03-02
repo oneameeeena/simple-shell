@@ -1,60 +1,108 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-#include <sys/types.h>
-#include <sys/wait.h>
-#include "SHELL.H"
+#include"shell.h"
+/**
+ * error_env - error message to get_env.
+ * @Data_sh: data (ln_count, arguments)
+ * Return: error.
+ */
+char *error_env(Data_sl *Data_sh)
+{
+	int lent;
+	char *error;
+	char *ver_str;
+	char *msg;
 
-#define MAX_LINE_LENGTH 1024
-#define MAX_ARGS 64
+	ver_str = func_itoa(Data_sh->ln_count);
+	msg = ": Unable to add/remove from environment\n";
+	lent = _strlen(Data_sh->av[0]) + _strlen(ver_str);
+	lent += _strlen(Data_sh->args[0]) + _strlen(msg) + 4;
+	error = malloc(sizeof(char) * (lent + 1));
+	if (error == 0)
+	{
+		free(error);
+		free(ver_str);
+		return (NULL);
+	}
 
-void execute_command(char *arguments[]) {
-    pid_t pid = fork();
-    if (pid == 0) {
-        if (execvp(arguments[0], arguments) == -1) {
-            perror("Error executing command");
-            exit(EXIT_FAILURE);
-        }
-    } else if (pid < 0) {
-        perror("Error forking");
-        exit(EXIT_FAILURE);
-    } else {
-        int status;
-        waitpid(pid, &status, 0);
-    }
+	_strcpy(error, Data_sh->av[0]);
+	_strcat(error, ": ");
+	_strcat(error, ver_str);
+	_strcat(error, ": ");
+	_strcat(error, Data_sh->args[0]);
+	_strcat(error, msg);
+	_strcat(error, "\0");
+	free(ver_str);
+
+	return (error);
+}
+/**
+ * error_path - error path permission denied
+ * @Data_sh: data (ln_count, arguments).
+ * Return: error.
+ */
+char *error_path(Data_sl *Data_sh)
+{
+	int lent;
+	char *ver_str;
+	char *error;
+
+	ver_str = func_itoa(Data_sh->ln_count);
+	lent = _strlen(Data_sh->av[0]) + _strlen(ver_str);
+	lent += _strlen(Data_sh->args[0]) + 24;
+	error = malloc(sizeof(char) * (lent + 1));
+	if (error == 0)
+	{
+		free(error);
+		free(ver_str);
+		return (NULL);
+	}
+	_strcpy(error, Data_sh->av[0]);
+	_strcat(error, ": ");
+	_strcat(error, ver_str);
+	_strcat(error, ": ");
+	_strcat(error, Data_sh->args[0]);
+	_strcat(error, ": Permission denied\n");
+	_strcat(error, "\0");
+	free(ver_str);
+	return (error);
 }
 
-int main() {
-    char *line;
-    size_t len = 0;
-    ssize_t read;
+/**
+ * func_helper_env - Helper for the builtin env
+ * Return: void
+ */
+void func_helper_env(void)
+{
+	char *help = "env: env [option] [cmd_name=value] [command [args]]\n\t";
 
-    while (1) {
-        printf("#cisfun$ ");
-        fflush(stdout);
+	write(STDOUT_FILENO, help, _strlen(help));
+	help = "Print the enviroment of the shell.\n";
+	write(STDOUT_FILENO, help, _strlen(help));
 
-        read = getline(&line, &len, stdin);
-        if (read == -1) {
-            break;
-        }
+}
+/**
+ * func_helper_set_env - Help for builtin setenv
+ * Return: void
+ */
+void func_helper_set_env(void)
+{
 
-        if (strcmp(line, "exit\n") == 0) {
-            break;
-        }
+	char *help = "setenv: setenv (const char *cmd_name, const char *value,";
 
-        char *arguments[MAX_ARGS];
-        char *token = strtok(line, " ");
-        int i = 0;
-        while (token != NULL && i < MAX_ARGS - 1) {
-            arguments[i++] = token;
-            token = strtok(NULL, " ");
-        }
-        arguments[i] = NULL;
+	write(STDOUT_FILENO, help, _strlen(help));
+	help = "int replace)\n\t";
+	write(STDOUT_FILENO, help, _strlen(help));
+	help = "Add a new definition to the environment\n";
+	write(STDOUT_FILENO, help, _strlen(help));
+}
+/**
+ * func_helper_unset_env - Help for unset_env
+ * Return: void
+ */
+void func_helper_unset_env(void)
+{
+	char *help = "unset_env: unset_env (const char *cmd_name)\n\t";
 
-        execute_command(arguments);
-    }
-
-i    free(line);
-    return 0;
+	write(STDOUT_FILENO, help, _strlen(help));
+	help = "Remove an entry completely from the environment\n";
+	write(STDOUT_FILENO, help, _strlen(help));
 }

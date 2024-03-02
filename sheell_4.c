@@ -1,63 +1,100 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-#include <sys/types.h>
-#include <sys/wait.h>
-#include "exit.h"
+#include"shell.h"
+/**
+ * func_helper_cd - for the builtin alias.
+ * Return: void
+ */
+void func_helper_cd(void)
+{
+	char *help = "cd: cd [-L|[-P [-e]] [-@]] [dir]\n";
 
-#define MAX_LINE_LENGTH 1024
-#define MAX_ARGS 64
+	write(STDOUT_FILENO, help, _strlen(help));
+	help = "\tChange the shell working directory.\n ";
+	write(STDOUT_FILENO, help, _strlen(help));
+}
+/**
+ * add_node - adds a separator at the end
+ * of a sperator_lst.
+ * @head: head
+ * @sep: separator (; | &).
+ * Return: address of the head.
+ */
+sperator_lst *add_node(sperator_lst **head, char sep)
+{
+	sperator_lst *new, *tmp;
 
-void execute_command(char *arguments[]) {
-    pid_t pid = fork();
-    if (pid == 0) {
-        if (strcmp(arguments[0], "exit") == 0) {
-            exit_shell();
-        }
-        if (execvp(arguments[0], arguments) == -1) {
-            perror("Error executing command");
-            exit(EXIT_FAILURE);
-        }
-    } else if (pid < 0) {
-        perror("Error forking");
-        exit(EXIT_FAILURE);
-    } else {
-        int status;
-        waitpid(pid, &status, 0);
-    }
+	new = malloc(sizeof(sperator_lst));
+	if (new == NULL)
+		return (NULL);
+
+	new->separator = sep;
+	new->next = NULL;
+	tmp = *head;
+
+	if (tmp == NULL)
+	{
+		*head = new;
+	}
+	else
+	{
+		while (tmp->next != NULL)
+			tmp = tmp->next;
+		tmp->next = new;
+	}
+
+	return (*head);
 }
 
-int main() {
-    char *line;
-    size_t len = 0;
-    ssize_t read;
-    char *arguments[MAX_ARGS];
+/**
+ * free_sperator_lst - frees a sperator_lst
+ * @head: head of the linked list.
+ * Return: void.
+ */
+void free_sperator_lst(sperator_lst **head)
+{
+	sperator_lst *tmp;
+	sperator_lst *curr;
 
-    while (1) {
-        printf("#cisfun$ ");
-        fflush(stdout);
+	if (head != NULL)
+	{
+		curr = *head;
+		while ((tmp = curr) != NULL)
+		{
+			curr = curr->next;
+			free(tmp);
+		}
+		*head = NULL;
+	}
+}
 
-        read = getline(&line, &len, stdin);
-        if (read == -1) {
-            break;
-        }
+/**
+ * AddLineNode - adds a cmd line at the end
+ * of list_ln.
+ * @head: head.
+ * @line: cmd line.
+ * Return: head adresse
+ */
+list_ln *AddLineNode(list_ln **head, char *line)
+{
+	list_ln *new, *tmp;
 
-        if (strcmp(line, "exit\n") == 0) {
-            break;
-        }
+	new = malloc(sizeof(list_ln));
+	if (new == NULL)
+		return (NULL);
 
-        char *token = strtok(line, " ");
-        int i = 0;
-        while (token != NULL && i < MAX_ARGS - 1) {
-            arguments[i++] = token;
-            token = strtok(NULL, " ");
-        }
-        arguments[i] = NULL;
+	new->line = line;
+	new->next = NULL;
+	tmp = *head;
 
-        execute_command(arguments);
-    }
+	if (tmp == NULL)
+	{
+		*head = new;
+	}
+	else
+	{
+		while (tmp->next != NULL)
+			tmp = tmp->next;
+		tmp->next = new;
+	}
 
-    free(line);
-    return 0;
+	return (*head);
 }

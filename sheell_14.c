@@ -1,88 +1,124 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+#include"shell.h"
+/**
+ * copy_info - copies info to create
+ * a new env or alias
+ * @cmd_name: name (env or alias)
+ * @value: value (env or alias)
+ * Return: new env or alias.
+ */
+char *copy_info(char *cmd_name, char *value)
+{
+	char *new;
+	int len_cmd_name, len_value, len;
 
-// This is a simple function that expands variables in a string.
-// It only handles simple variables of the form $VAR, and does not
-// handle more complex cases like ${VAR-default} or $(command).
-char *expand_variables(char *input) {
-  char *output = malloc(strlen(input) + 1);
-  char *input_ptr = input;
-  char *output_ptr = output;
+	len_cmd_name = _strlen(cmd_name);
+	len_value = _strlen(value);
+	len = len_cmd_name + len_value + 2;
+	new = malloc(sizeof(char) * (len));
+	_strcpy(new, cmd_name);
+	_strcat(new, "=");
+	_strcat(new, value);
+	_strcat(new, "\0");
 
-  while (*input_ptr != '\0') {
-    if (*input_ptr == '$') {
-      // We have a potential variable.
-      input_ptr++;
-      if (*input_ptr == '\0') {
-        // The variable is empty.
-        *output_ptr++ = '$';
-      } else if (*input_ptr == '{') {
-        // The variable has a name in curly braces.
-        char *brace_start = input_ptr;
-        char *brace_end = strchr(brace_start, '}');
-        if (brace_end == NULL) {
-          // The variable name is not properly terminated.
-          *output_ptr++ = '$';
-          *output_ptr++ = *input_ptr;
-        } else {
-          // Expand the variable.
-          char *var_name = brace_start + 1;
-          char *var_value = getenv(var_name);
-          if (var_value == NULL) {
-            // The variable is not set.
-            *output_ptr++ = '$';
-            *output_ptr++ = *brace_start;
-          } else {
-            // Copy the variable value.
-            while (var_name < brace_end) {
-              *output_ptr++ = *var_name++;
-            }
-            input_ptr = brace_end + 1;
-          }
-        }
-      } else {
-        // The variable has a simple name.
-        char *var_name = input_ptr;
-        char *var_value = getenv(var_name);
-        if (var_value == NULL) {
-          // The variable is not set.
-          *output_ptr++ = '$';
-          *output_ptr++ = *input_ptr;
-        } else {
-          // Expand the variable.
-          while (*var_name != '\0' && *var_name != '{') {
-            *output_ptr++ = *var_name++;
-          }
-          input_ptr = var_name;
-        }
-      }
-    } else {
-      // This is not a variable, just copy the character.
-      *output_ptr++ = *input_ptr++;
-    }
-  }
-
-  *output_ptr = '\0';
-  return output;
+	return (new);
 }
 
-int main() {
-  // This is a simple command loop that reads commands, expands variables,
-  // and prints the result. In a real shell, you would need to tokenize
-  // the command and arguments, and then execute the command with the
-  // arguments.
-  char line[1024];
-  while (1) {
-    printf("simple_shell> ");
-    if (fgets(line, sizeof(line), stdin) == NULL) {
-      // End of file (Ctrl-D).
-      break;
-    }
-    char *expanded_command = expand_variables(line);
-    printf("expanded: %s", expanded_command);
-    free(expanded_command);
-  }
+/**
+ * envSet - sets an environment var
+ * @cmd_name: name of the environment var
+ * @value: value of the environment var
+ * @Data_sh: data strcture (environ)
+ * Return: void
+ */
+void envSet(char *cmd_name, char *value, Data_sl *Data_sh)
+{
+	int i;
+	char *var_env, *cmd_name_env;
 
-  return 0;
+	for (i = 0; Data_sh->var_environ[i]; i++)
+	{
+		var_env = _strdup(Data_sh->var_environ[i]);
+		cmd_name_env = _strtok(var_env, "=");
+		if (_strcmp(cmd_name_env, cmd_name) == 0)
+		{
+			free(Data_sh->var_environ[i]);
+			Data_sh->var_environ[i] = copy_info(cmd_name_env, value);
+			free(var_env);
+			return;
+		}
+		free(var_env);
+	}
+
+	Data_sh->var_environ =
+	func_reallocdp(Data_sh->var_environ, i, sizeof(char *) * (i + 2));
+	Data_sh->var_environ[i] = copy_info(cmd_name, value);
+	Data_sh->var_environ[i + 1] = NULL;
+}
+
+/**
+ * env_Set - compares env var names
+ * with the name passed.
+ * @Data_sh: data relevant (env cmd_name and env value)
+ * Return: 1 on success.
+ */
+int env_Set(Data_sl *Data_sh)
+{
+
+	if (Data_sh->args[1] == NULL || Data_sh->args[2] == NULL)
+	{
+		get_error(Data_sh, -1);
+		return (1);
+	}
+
+	envSet(Data_sh->args[1], Data_sh->args[2], Data_sh);
+
+	return (1);
+}
+
+/**
+ * _unset_env - deletes a environment var
+ * @Data_sh: data relevant (env cmd_name)
+ * Return: 1 on success.
+ */
+int _unset_env(Data_sl *Data_sh)
+{
+	char **reallocvar_environ;
+	char *var_env, *cmd_name_env;
+	int i, j, k;
+
+	if (Data_sh->args[1] == NULL)
+	{
+		get_error(Data_sh, -1);
+		return (1);
+	}
+	k = -1;
+	for (i = 0; Data_sh->var_environ[i]; i++)
+	{
+		var_env = _strdup(Data_sh->var_environ[i]);
+		cmd_name_env = _strtok(var_env, "=");
+		if (_strcmp(cmd_name_env, Data_sh->args[1]) == 0)
+		{
+			k = i;
+		}
+		free(var_env);
+	}
+	if (k == -1)
+	{
+		get_error(Data_sh, -1);
+		return (1);
+	}
+	reallocvar_environ = malloc(sizeof(char *) * (i));
+	for (i = j = 0; Data_sh->var_environ[i]; i++)
+	{
+		if (i != k)
+		{
+			reallocvar_environ[j] = Data_sh->var_environ[i];
+			j++;
+		}
+	}
+	reallocvar_environ[j] = NULL;
+	free(Data_sh->var_environ[k]);
+	free(Data_sh->var_environ);
+	Data_sh->var_environ = reallocvar_environ;
+	return (1);
 }

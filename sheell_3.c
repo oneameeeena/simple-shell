@@ -1,80 +1,66 @@
-#include "SHELL.H"
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-#include <sys/types.h>
-#include <sys/wait.h>
-#include "path.h"
+#include"shell.h"
+/**
+ * func_helper_general - for help builtin
+ * Return: void
+ */
+void func_helper_general(void)
+{
+	char *help = "$ bash, version 1.0(1)-release\n";
 
-#define MAX_LINE_LENGTH 1024
-#define MAX_ARGS 64
+	write(STDOUT_FILENO, help, _strlen(help));
+	help = "These commands are defined internally.Type 'help' to see the list";
+	write(STDOUT_FILENO, help, _strlen(help));
+	help =
+	"Type 'help cmd_name' to find out more about the function 'cmd_name'.\n\n ";
+	write(STDOUT_FILENO, help, _strlen(help));
+	help = " alias: alias [cmd_name=['str']]\n cd: cd [-L|[-P [-e]] [-@]] ";
+	write(STDOUT_FILENO, help, _strlen(help));
+	help =
+	"[dir]\nexit: exit [n]\n  env: env [option] [cmd_name=value] [command ";
+	write(STDOUT_FILENO, help, _strlen(help));
+	help = "[args]]\n  setenv: setenv [variable] [value]\n  unset_env: ";
+	write(STDOUT_FILENO, help, _strlen(help));
+	help = "unset_env [variable]\n";
+	write(STDOUT_FILENO, help, _strlen(help));
+}
+/**
+ * func_helper_exit - Help for builint exit
+ * Return: void
+ */
+void func_helper_exit(void)
+{
+	char *help = "exit: exit [n]\n Exit shell.\n";
 
-void execute_command(char *arguments[]) {
-    pid_t pid = fork();
-    if (pid == 0) {
-        if (execvp(arguments[0], arguments) == -1) {
-            perror("Error executing command");
-            exit(EXIT_FAILURE);
-        }
-    } else if (pid < 0) {
-        perror("Error forking");
-        exit(EXIT_FAILURE);
-    } else {
-        int status;
-        waitpid(pid, &status, 0);
-    }
+	write(STDOUT_FILENO, help, _strlen(help));
+	help = "Exits the shell with a status of N. If N is ommited, the exit";
+	write(STDOUT_FILENO, help, _strlen(help));
+	help = "statusis that of the last command executed\n";
+	write(STDOUT_FILENO, help, _strlen(help));
 }
 
-int main() {
-    char *line;
-    size_t len = 0;
-    ssize_t read;
+/**
+ * func_helper - for builtin help.
+ * Return: void
+ */
+void func_helper(void)
+{
+	char *help = "help: help [-dms] [pattern ...]\n";
 
-    while (1) {
-        printf("#cisfun$ ");
-        fflush(stdout);
+	write(STDOUT_FILENO, help, _strlen(help));
+	help = "\tDisplay information about builtin commands.\n ";
+	write(STDOUT_FILENO, help, _strlen(help));
+	help = "Displays brief summaries of builtin commands.\n";
+	write(STDOUT_FILENO, help, _strlen(help));
+}
+/**
+ * func_helper_alias - for the builtin alias.
+ * Return: void
+ */
+void func_helper_alias(void)
+{
+	char *help = "alias: alias [-p] [cmd_name[=value]...]\n";
 
-        read = getline(&line, &len, stdin);
-        if (read == -1) {
-            break;
-        }
-
-        if (strcmp(line, "exit\n") == 0) {
-            break;
-        }
-
-        char *arguments[MAX_ARGS];
-        char *token = strtok(line, " ");
-        int i = 0;
-        while (token != NULL && i < MAX_ARGS - 1) {
-            arguments[i++] = token;
-            token = strtok(NULL, " ");
-        }
-        arguments[i] = NULL;
-
-        char *path = get_path();
-        if (path == NULL) {
-            perror("Error getting PATH environment variable");
-            continue;
-        }
-
-        char *full_path = find_command_in_path(path, arguments[0]);
-        if (full_path == NULL) {
-            printf("Command not found: %s\n", arguments[0]);
-            continue;
-        }
-
-        char *arguments_with_path[MAX_ARGS + 1];
-        arguments_with_path[0] = full_path;
-        for (int j = 1; j < i; j++) {
-            arguments_with_path[j] = arguments[j - 1];
-        }
-        arguments_with_path[i + 1] = NULL;
-
-        execute_command(arguments_with_path);
-    }
-
-    free(line);
-    return 0;
+	write(STDOUT_FILENO, help, _strlen(help));
+	help = "\tDefine or display aliases.\n ";
+	write(STDOUT_FILENO, help, _strlen(help));
 }

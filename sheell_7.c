@@ -1,38 +1,79 @@
-int main(int ac, char *argv[]) {
-    char *prompt = "(Eshell) $ ";
-    char *lineptr = NULL;
-    size_t n = 0;
-    ssize_t bytes_read;
-    char **tokens;
-    char **argv_copy;
+#include"shell.h"
+/**
+ * _strcat - concatenate two strs
+ * @dest: destination
+ * @src: source
+ * Return: dest
+ */
+char *_strcat(char *dest, const char *src)
+{
+	int i;
+	int j;
 
-    while (1) {
-        printf("%s", prompt);
-        bytes_read = my_getline(&lineptr, &n, stdin);
+	for (i = 0; dest[i] != '\0'; i++)
+		;
 
-        if (bytes_read < 0) {
-            free(lineptr);
-            break;
-        }
+	for (j = 0; src[j] != '\0'; j++)
+	{
+		dest[i] = src[j];
+		i++;
+	}
 
-        tokens = custom_tokenize(lineptr, ' ');
-        argv_copy = malloc(MAX_ARGS * sizeof(char *));
-        int i = 0;
-        while (tokens[i] != NULL) {
-            argv_copy[i] = tokens[i];
-            i++;
-        }
-        argv_copy[i] = NULL;
+	dest[i] = '\0';
+	return (dest);
+}
+/**
+ * *_strcpy - Copies the str pointed to by src.
+ * @dest: destination
+ * @src: source
+ * Return: dest.
+ */
+char *_strcpy(char *dest, char *src)
+{
 
-        execute_command(argv_copy);
+	size_t a;
 
-        for (int j = 0; tokens[j] != NULL; j++) {
-            free(tokens[j]);
-        }
-        free(tokens);
-        free(argv_copy);
-    }
+	for (a = 0; src[a] != '\0'; a++)
+	{
+		dest[a] = src[a];
+	}
+	dest[a] = '\0';
 
-    free(lineptr);
-    return 0;
+	return (dest);
+}
+/**
+ * _strcmp - compares two strs.
+ * @s1: str
+ * @s2: str
+ * Return: Always 0.
+ */
+int _strcmp(char *s1, char *s2)
+{
+	int i;
+
+	for (i = 0; s1[i] == s2[i] && s1[i]; i++)
+		;
+
+	if (s1[i] > s2[i])
+		return (1);
+	if (s1[i] < s2[i])
+		return (-1);
+	return (0);
+}
+/**
+ * _strchr - locates a character into str,
+ * @s: str.
+ * @c: char.
+ * Return: char.
+ */
+char *_strchr(char *s, char c)
+{
+	unsigned int i = 0;
+
+	for (; *(s + i) != '\0'; i++)
+		if (*(s + i) == c)
+			return (s + i);
+	if (*(s + i) == c)
+		return (s + i);
+	return ('\0');
 }
